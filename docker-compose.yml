@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./production:/var/www/html/production
+      - ./staging:/var/www/html/staging
+    depends_on:
+      - php
+    networks:
+      - laravel
+
+  php:
+    build:
+      context: .
+    container_name: php
+    volumes:
+      - ./production:/var/www/html/production
+      - ./staging:/var/www/html/staging
+    depends_on:
+      - mariadb
+    networks:
+      - laravel
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    # restart: always
+    environment:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: prod_db
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - laravel
+
+volumes:
+  db_data:
+
+networks:
+  laravel:
+    driver: bridge
+ 
