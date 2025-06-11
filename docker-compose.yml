@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  control-machine-i4c:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: control-machine-i4c
+    volumes:
+      - "./ansible:/ansible"
+      - "./html:/var/www/html"
+    depends_on:
+      - server1-i4c
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+
+  server1-i4c:
+    build:
+      context: ./laravel_image
+      dockerfile: Dockerfile
+    container_name: server1-i4c
+    environment:
+      - USER=nginx
+    volumes:
+      - "./html:/var/www/html"
+    ports:
+      - "8080:80"   # Production access
+      - "8081:80"   # You might want separate ports for staging
+      - "2222:22"   # SSH access
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,181 @@
+- name: Deploy Laravel Applications (Production & Staging)
+  hosts: myservers
+  become: yes
+  vars:
+    laravel_production_path: "/var/www/html/production"
+    laravel_staging_path: "/var/www/html/staging"
+    php_fpm_service: "php8.3-fpm"
+    nginx_service: "nginx"
+
+  tasks:
+    - name: Update system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Ensure directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+      loop:
+        - "{{ laravel_production_path }}"
+        - "{{ laravel_staging_path }}"
+        - "{{ laravel_production_path }}/storage"
+        - "{{ laravel_staging_path }}/storage"
+        - "{{ laravel_production_path }}/bootstrap/cache"
+        - "{{ laravel_staging_path }}/bootstrap/cache"
+
+    - name: Set proper permissions for Laravel directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0775'
+        recurse: yes
+      loop:
+        - "{{ laravel_production_path }}/storage"
+        - "{{ laravel_staging_path }}/storage"
+        - "{{ laravel_production_path }}/bootstrap/cache"
+        - "{{ laravel_staging_path }}/bootstrap/cache"
+
+    - name: Install Composer dependencies for Production
+      shell: |
+        cd {{ laravel_production_path }}
+        if [ -f composer.json ]; then
+          composer install --optimize-autoloader --no-dev
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Install Composer dependencies for Staging
+      shell: |
+        cd {{ laravel_staging_path }}
+        if [ -f composer.json ]; then
+          composer install --optimize-autoloader
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Generate Laravel application key for Production
+      shell: |
+        cd {{ laravel_production_path }}
+        if [ -f artisan ]; then
+          php artisan key:generate --force
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Generate Laravel application key for Staging
+      shell: |
+        cd {{ laravel_staging_path }}
+        if [ -f artisan ]; then
+          php artisan key:generate --force
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Run Laravel migrations for Production
+      shell: |
+        cd {{ laravel_production_path }}
+        if [ -f artisan ]; then
+          php artisan migrate --force
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Run Laravel migrations for Staging
+      shell: |
+        cd {{ laravel_staging_path }}
+        if [ -f artisan ]; then
+          php artisan migrate --force
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Clear Laravel cache for Production
+      shell: |
+        cd {{ laravel_production_path }}
+        if [ -f artisan ]; then
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan route:clear
+          php artisan view:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Clear Laravel cache for Staging
+      shell: |
+        cd {{ laravel_staging_path }}
+        if [ -f artisan ]; then
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan route:clear
+          php artisan view:clear
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Install NPM dependencies and build assets for Production
+      shell: |
+        cd {{ laravel_production_path }}
+        if [ -f package.json ]; then
+          npm install
+          npm run build
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Install NPM dependencies and build assets for Staging
+      shell: |
+        cd {{ laravel_staging_path }}
+        if [ -f package.json ]; then
+          npm install
+          npm run dev
+        fi
+      become_user: www-data
+      ignore_errors: yes
+
+    - name: Test Nginx configuration
+      command: nginx -t
+      register: nginx_test
+      failed_when: nginx_test.rc != 0
+
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: Restart PHP-FPM
+      service:
+        name: "{{ php_fpm_service }}"
+        state: restarted
+      ignore_errors: yes
+
+    - name: Ensure services are running
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - nginx
+      ignore_errors: yes
+
+    - name: Display deployment status
+      debug:
+        msg: |
+          Laravel Deployment Complete!
+          Production: http://gici4c2025.com (port 8080)
+          Staging: http://gici4c2025.staging (port 8080)
+          
+          Next steps:
+          1. Update your hosts file or DNS to point domains to your server
+          2. Configure SSL certificates if needed
+          3. Set up proper environment variables in .env files
