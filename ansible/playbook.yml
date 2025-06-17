@@ -1,0 +1,112 @@
+- name: Deploy Laravel Application
+  hosts: all
+  remote_user: root
+  gather_facts: yes
+
+  vars:
+    project_root: /var/www/html/production
+
+  tasks:
+    - name: Ping the host
+      ping:
+
+    - name: Ensure production directory exists
+      file:
+        path: "{{ project_root }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    - name: Remove staging directory if exists
+      file:
+        path: /var/www/html/staging
+        state: absent
+
+    - name: Ensure git is installed
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: Ensure composer is installed
+      apt:
+        name: composer
+        state: present
+
+    - name: Ensure Node.js is installed
+      apt:
+        name: nodejs
+        state: present
+
+    - name: Ensure npm is installed
+      apt:
+        name: npm
+        state: present
+
+    - name: Clone Laravel repository
+      git:
+        repo: 'https://github.com/gitmeas02/DevOps.git'
+        dest: "{{ project_root }}"
+        version: TP6_1
+        force: yes
+      become: no
+
+    - name: Check if .env.example exists
+      stat:
+        path: "{{ project_root }}/.env.example"
+      register: env_example
+
+    - name: Copy .env.example to .env if .env does not exist
+      copy:
+        src: "{{ project_root }}/.env.example"
+        dest: "{{ project_root }}/.env"
+        remote_src: yes
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      when: env_example.stat.exists
+
+    - name: Ensure production.sqlite exists
+      file:
+        path: "{{ project_root }}/production.sqlite"
+        state: touch
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Install PHP dependencies (Composer)
+      command: composer install --no-dev --optimize-autoloader
+      args:
+        chdir: "{{ project_root }}"
+      become: no
+
+    - name: Install Node.js dependencies (npm)
+      command: npm install
+      args:
+        chdir: "{{ project_root }}"
+      become: no
+
+    - name: Generate application key
+      command: php artisan key:generate
+      args:
+        chdir: "{{ project_root }}"
+      become: no
+
+    - name: Run database migrations
+      command: php artisan migrate --force
+      args:
+        chdir: "{{ project_root }}"
+      become: no
+
+    - name: Build frontend assets
+      command: npm run build
+      args:
+        chdir: "{{ project_root }}"
+      become: no
+
+    - name: Ensure correct ownership of production directory except node_modules
+      become: yes
+      ansible.builtin.shell: |
+        find {{ project_root }} -not -path "{{ project_root }}/node_modules/*" -exec chown www-data:www-data {} +
+

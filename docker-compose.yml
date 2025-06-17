@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  ansible-i4c:
+    image: ubuntu:latest
+    container_name: ansible-i4c
+    command: >
+      sh -c "apt-get update &&
+             apt-get install -y ansible openssh-client sshpass &&
+             tail -f /dev/null"
+    volumes:
+      - ./ansible:/ansible
+    depends_on:
+      - nginx-i4c
+    networks:
+      - i4c-network
+
+  nginx-i4c:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nginx-i4c
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./www:/var/www/html
+    networks:
+      - i4c-network
+
+networks:
+  i4c-network:
+    driver: bridge

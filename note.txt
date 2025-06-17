@@ -1,0 +1,18 @@
+docker exec -it nginx-i4c bash
+apt update
+apt install sudo -y
+cd /var/www/html/production
+ls -la
+apt update && apt install -y python3
+
+---------------------------------------
+docker exec -it ansible-i4c sh
+cd /ansible
+ansible-playbook -i inventory.ini playbook.yml
+#PermitRootLogin prohibit-password
+#PasswordAuthentication yes
+nano /etc/ssh/sshd_config
+PermitRootLogin yes
+PasswordAuthentication yes
+service ssh restart
+ssh root@172.22.0.2
