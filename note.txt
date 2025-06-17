@@ -4,7 +4,84 @@ apt install sudo -y
 cd /var/www/html/production
 ls -la
 apt update && apt install -y python3
-
+ssh nginx-i4c
+passwd root
+docker exec -it nginx-i4c bash 
+root@342bd79ed087:/# history
+    1  ls
+    2  cd var/
+    3  ls
+    4  cd www/
+    5  ls
+    6  cd html/
+    7  ls
+    8  ls
+    9  exit
+   10  cd var/www/html/
+   11  ls
+   12   ps aux | grep sshd
+   13  service ssh start
+   14   
+   15  passwd root
+   16   
+   17  passwd root
+   18  clear
+   19  exit
+   20  ssh root@172.22.0.2  
+   21  ssh root@172.22.0.2  
+   22  exit
+   23  ls
+   24  ansible-playbook -i inventory.ini playbook.yml
+   25   
+   26  pwd
+   27  cd /home/
+   28  ls
+   29  cd /root/
+   30  ls
+   31  exit
+   32  passwd root
+   33   
+   34  grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config
+   35   
+   36  cd /etc/ssh/
+   37  ls
+   38  sudo nano ssh_config
+   39  nano  ssh_config
+   40  vi ssh_config
+   41  apt-get update
+   42  apt-get install -y nano
+   43   
+   44  nano  ssh_config
+   45  grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config
+   46  service ssh restart
+   47   
+   48  grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config
+   49  grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config
+   50  nano  ssh_config
+   51  sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+   52  service ssh restart
+   53   
+   54  sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+   55  grep -E 'PermitRootLogin|PasswordAuthentication' /etc/ssh/sshd_config
+   56  nano  ssh_config
+   57  ssh root@172.22.0.2
+   58  exit
+   59  ls
+   60  cd var/www/html/
+   61  ls
+   62  ls
+   63  docker exec -it nginx-i4c bash
+   64   
+   65  apt update && apt install -y python3
+   66   
+   67  exit
+   68  cd var/www/html/
+   69   ls -la
+   70  cd production/
+   71   ls -la
+   72  exit
+   73  history
+root@342bd79ed087:/# 
 ---------------------------------------
 docker exec -it ansible-i4c sh
 cd /ansible
